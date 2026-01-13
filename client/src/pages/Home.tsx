@@ -1,12 +1,48 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ShoppingBag, Zap, TrendingUp, Shield, Users, Baby } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Zap, TrendingUp, Shield, Users, Baby, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabase"; // استدعاء الاتصال بقاعدة البيانات
+
+// تعريف شكل المنتج
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image_url: string;
+  category: string;
+}
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  
+  // متغيرات لتخزين المنتجات وحالة التحميل
+  const [latestProducts, setLatestProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // جلب أحدث المنتجات عند فتح الصفحة
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false }) // الأحدث أولاً
+          .limit(4); // جلب 4 منتجات فقط
+
+        if (error) throw error;
+        if (data) setLatestProducts(data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900" dir="rtl">
@@ -14,7 +50,6 @@ export default function Home() {
       <nav className="border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 bg-white/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-             {/* هنا تقدر تحط اللوجو بتاعك مستقبلاً */}
             <h1 className="text-3xl font-black tracking-tighter text-blue-700 dark:text-blue-500">
               ERA<span className="text-slate-900 dark:text-white">SPORT</span>
             </h1>
@@ -56,16 +91,13 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button onClick={() => navigate("/shop")} size="lg" className="h-14 px-8 text-lg bg-blue-600 hover:bg-blue-700">
-                  قسم الرجال
-                </Button>
-                <Button onClick={() => navigate("/shop")} size="lg" variant="outline" className="h-14 px-8 text-lg border-2">
-                  قسم الأطفال
+                  تصفح المنتجات
                 </Button>
               </div>
             </div>
             
             <div className="relative group">
-              <div className="absolute -inset-4 bg-blue-500/10 rounded-[2rem] blur-2xl group-hover:bg-blue-500/20 transition-all" />
+               <div className="absolute -inset-4 bg-blue-500/10 rounded-[2rem] blur-2xl group-hover:bg-blue-500/20 transition-all" />
               <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-700 shadow-2xl">
                 <img
                   src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"
@@ -78,44 +110,46 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quick Categories - التخصص: رجالي وأطفال */}
-      <section className="py-16">
+      {/* 🔥 قسم المنتجات المضافة حديثاً (جديد) */}
+      <section className="py-16 bg-white dark:bg-slate-900">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Men's Card */}
-            <div 
-              onClick={() => navigate("/shop")}
-              className="relative h-80 rounded-3xl overflow-hidden cursor-pointer group"
-            >
-              <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-black/40 flex items-end p-8">
-                <div className="text-white">
-                  <Users className="w-10 h-10 mb-2" />
-                  <h4 className="text-3xl font-bold">ملابس رجالية</h4>
-                  <p className="opacity-80">تيشرتات، بنطلونات، وترينجات</p>
+          <h3 className="text-3xl font-bold mb-8 text-center">أحدث المنتجات المضافة</h3>
+          
+          {loading ? (
+            <div className="flex justify-center p-10"><Loader2 className="animate-spin w-8 h-8 text-blue-600" /></div>
+          ) : latestProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {latestProducts.map((product) => (
+                <div key={product.id} className="group relative bg-slate-50 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all">
+                  <div className="aspect-square overflow-hidden bg-gray-100">
+                    <img 
+                      src={product.image_url || "https://placehold.co/400"} 
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-bold text-lg line-clamp-1">{product.name}</h4>
+                      <span className="text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded text-sm">
+                        {product.price} ج.م
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-500 mb-4">{product.category === 'men' ? 'رجالي' : 'أطفال'}</p>
+                    <Button onClick={() => navigate("/shop")} className="w-full bg-slate-900 hover:bg-blue-600">
+                      شراء الآن <ShoppingBag className="w-4 h-4 mr-2" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-
-            {/* Kids' Card */}
-            <div 
-              onClick={() => navigate("/shop")}
-              className="relative h-80 rounded-3xl overflow-hidden cursor-pointer group"
-            >
-              <img src="https://images.unsplash.com/photo-1519340241574-2bc3993c66f9?w=600" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-blue-900/40 flex items-end p-8">
-                <div className="text-white">
-                  <Baby className="w-10 h-10 mb-2" />
-                  <h4 className="text-3xl font-bold">ملابس أطفال</h4>
-                  <p className="opacity-80">أطقم رياضية مريحة للصغار</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          ) : (
+            <p className="text-center text-slate-500">لا توجد منتجات مضافة حالياً.</p>
+          )}
         </div>
       </section>
 
-      {/* Why EraSport? */}
+      {/* Why EraSport Section */}
       <section className="py-20 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
@@ -149,4 +183,3 @@ export default function Home() {
     </div>
   );
 }
-
