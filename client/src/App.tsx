@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "./pages/NotFound"; // تأكد أن المسار يبدأ بـ ./
+import NotFound from "./pages/NotFound"; 
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import AdminDashboard from "./pages/Admin"; // استيراد صفحة لوحة التحكم الجديدة
 
 function Router() {
   return (
@@ -20,6 +21,9 @@ function Router() {
       <Route path="/shop" component={Shop} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
+      {/* الرابط السري للوحة التحكم */}
+      <Route path="/admin" component={AdminDashboard} /> 
+      
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
