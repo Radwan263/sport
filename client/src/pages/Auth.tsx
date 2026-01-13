@@ -8,7 +8,6 @@ import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
 
-// تم إضافة export default هنا لحل مشكلة الـ Build
 export default function Auth() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [, navigate] = useLocation();
@@ -84,4 +83,3 @@ export default function Auth() {
     </div>
   );
 }
-. 
