@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ ده الصح
 import { Loader2, Mail, Lock, Phone, Chrome } from "lucide-react";
 import { toast } from "sonner";
 
