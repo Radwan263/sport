@@ -1,16 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-// هنا بنقول للكود يقرأ المفاتيح اللي إنت ضفتها في Netlify
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
 
-// لو المفاتيح مش مقروءة، الكود هيطلع تنبيه في الـ Console
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase URL or Anon Key is missing in Environment Variables')
+  throw new Error('Supabase environment variables are missing')
 }
 
 export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
+  supabaseUrl,
+  supabaseAnonKey
 )
-
