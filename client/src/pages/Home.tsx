@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/_core/hooks/AuthContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ ده الصح
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShoppingBag, Zap, TrendingUp, Shield, Loader2, Plus } from "lucide-react";
 import { useLocation } from "wouter";
