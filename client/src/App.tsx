@@ -4,7 +4,8 @@ import NotFound from "./pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { CartProvider } from "./contexts/CartContext"; // 👈 استيراد المحرك
+import { CartProvider } from "./contexts/CartContext"; // استدعاء السلة
+import { AuthProvider } from "./contexts/AuthContext"; // استدعاء نظام الدخول الجديد
 
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/checkout" component={Checkout} />
       <Route path="/product/:id" component={ProductDetails} />
       <Route path="/admin" component={AdminDashboard} /> 
+      
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -36,13 +38,15 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        {/* 👈 غلفنا التطبيق كله بمحرك السلة */}
-        <CartProvider> 
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </CartProvider>
+        {/* ✅ الترتيب مهم: AuthProvider الأول عشان يغطي السلة والتطبيق */}
+        <AuthProvider> 
+          <CartProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </CartProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
