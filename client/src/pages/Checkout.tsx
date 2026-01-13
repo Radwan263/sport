@@ -4,28 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, ChevronRight, MapPin } from "lucide-react";
+import { Loader2, ChevronRight, MapPin, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 const SIZES = ["L", "XL", "XXL", "3XL", "4XL"];
 
-// Weight to size mapping
-const WEIGHT_TO_SIZE: Record<string, string> = {
-  "50-70": "L",
-  "70-85": "XL",
-  "85-100": "XXL",
-  "100-120": "3XL",
-  "120-200": "4XL",
-};
-
-interface CheckoutStep {
-  id: number;
-  title: string;
-  description: string;
-}
-
-const STEPS: CheckoutStep[] = [
+const STEPS = [
   { id: 1, title: "معلومات شخصية", description: "الاسم والهاتف" },
   { id: 2, title: "العنوان", description: "موقع التسليم" },
   { id: 3, title: "المقاسات", description: "اختر المقاس أو الوزن" },
@@ -35,6 +20,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Step 1: Personal Info
   const [personalInfo, setPersonalInfo] = useState({
@@ -47,12 +33,12 @@ export default function Checkout() {
   const [location, setLocation] = useState({
     address: "",
     city: "",
-    country: "",
+    country: "مصر",
   });
 
   // Step 3: Sizing
   const [sizing, setSizing] = useState({
-    sizeMethod: "size", // "size" or "weight"
+    sizeMethod: "size",
     selectedSize: "",
     weight: "",
   });
@@ -73,7 +59,6 @@ export default function Checkout() {
     const weight = parseFloat(e.target.value);
     setSizing(prev => ({ ...prev, weight: e.target.value }));
 
-    // Suggest size based on weight
     if (weight >= 50 && weight <= 70) setSuggestedSize("L");
     else if (weight > 70 && weight <= 85) setSuggestedSize("XL");
     else if (weight > 85 && weight <= 100) setSuggestedSize("XXL");
@@ -82,336 +67,145 @@ export default function Checkout() {
     else setSuggestedSize(null);
   };
 
-  const validateStep1 = () => {
-    if (!personalInfo.fullName.trim()) {
-      toast.error("يرجى إدخال الاسم الكامل");
-      return false;
-    }
-    if (!personalInfo.primaryPhone.trim()) {
-      toast.error("يرجى إدخال رقم الهاتف الأساسي");
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep2 = () => {
-    if (!location.address.trim()) {
-      toast.error("يرجى إدخال العنوان");
-      return false;
-    }
-    if (!location.city.trim()) {
-      toast.error("يرجى إدخال المدينة");
-      return false;
-    }
-    if (!location.country.trim()) {
-      toast.error("يرجى إدخال الدولة");
-      return false;
-    }
-    return true;
-  };
-
-  const validateStep3 = () => {
-    if (sizing.sizeMethod === "size" && !sizing.selectedSize) {
-      toast.error("يرجى اختيار المقاس");
-      return false;
-    }
-    if (sizing.sizeMethod === "weight" && !sizing.weight) {
-      toast.error("يرجى إدخال الوزن");
-      return false;
-    }
-    return true;
-  };
-
-  const handleNextStep = () => {
-    if (currentStep === 1 && !validateStep1()) return;
-    if (currentStep === 2 && !validateStep2()) return;
-    if (currentStep === 3 && !validateStep3()) return;
-
-    if (currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePreviousStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
   const handleCompleteCheckout = async () => {
-    if (!validateStep3()) return;
-
     setIsLoading(true);
     try {
-      // Prepare order data
       const finalSize = sizing.sizeMethod === "weight" ? suggestedSize : sizing.selectedSize;
-      const orderData = {
-        personalInfo,
-        location,
-        size: finalSize,
-        weight: sizing.weight,
-        totalPrice: 648, // Mock total
-      };
-
-      // Generate WhatsApp message
-      const message = `
-*طلب جديد من المتجر*
-
-*بيانات العميل:*
-الاسم: ${personalInfo.fullName}
-الهاتف: ${personalInfo.primaryPhone}
-الهاتف البديل: ${personalInfo.backupPhone}
-
-*العنوان:*
-${location.address}
-${location.city}, ${location.country}
-
-*المنتجات:*
-- قميص منتخب مصر 2024 (299 ج.م) × 1
-- هودي رياضي أسود (399 ج.م) × 2
-
-*المقاس/الوزن:* ${finalSize}${sizing.weight ? ` (${sizing.weight} كجم)` : ""}
-
-*الإجمالي:* 648 ج.م
+      
+      // تجهيز نص الرسالة للتليجرام
+      const messageText = `
+🚀 *أوردر جديد في EraSport!*
+------------------------------
+👤 *العميل:* ${personalInfo.fullName}
+📞 *الموبايل:* ${personalInfo.primaryPhone}
+📞 *موبايل بديل:* ${personalInfo.backupPhone || "لا يوجد"}
+🏠 *العنوان:* ${location.address}
+🏙️ *المدينة:* ${location.city}
+📏 *المقاس المختاره:* ${finalSize}
+⚖️ *الوزن:* ${sizing.weight ? sizing.weight + " كجم" : "لم يتم الإدخال"}
+------------------------------
+💰 *حالة الدفع:* عند الاستلام
       `.trim();
 
-      // Redirect to WhatsApp
-      const whatsappUrl = `https://wa.me/201234567890?text=${encodeURIComponent(message)}`;
-      window.location.href = whatsappUrl;
+      // بيانات البوت الخاص بك
+      const BOT_TOKEN = "7710056851:AAHFHJswIqf4c7h3HEN5LPGqhSuVZcHY2i8";
+      const CHAT_ID = "654471191";
 
-      toast.success("جاري إعادة التوجيه إلى WhatsApp");
+      const telegramUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+      
+      const response = await fetch(telegramUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: messageText,
+          parse_mode: "Markdown",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to send telegram message");
+
+      setIsSuccess(true);
+      toast.success("تم إرسال طلبك بنجاح ✅");
+      
+      // بعد 3 ثواني نرجعه للمتجر
+      setTimeout(() => navigate("/shop"), 3000);
+
     } catch (error) {
-      toast.error("حدث خطأ في إتمام الطلب");
+      console.error(error);
+      toast.error("عذراً، حدث خطأ أثناء إتمام الطلب");
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white p-4 text-center">
+        <div className="space-y-4">
+          <CheckCircle2 className="w-20 h-20 text-green-500 mx-auto animate-bounce" />
+          <h2 className="text-3xl font-bold text-slate-900">شكراً لك!</h2>
+          <p className="text-slate-600">تم استلام طلبك بنجاح في EraSport، سنتواصل معك قريباً لتأكيد الشحن.</p>
+          <Button onClick={() => navigate("/shop")} variant="outline">العودة للمتجر</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center flex-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                    currentStep >= step.id
-                      ? "bg-blue-600 text-white"
-                      : "bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-400"
-                  }`}
-                >
-                  {step.id}
-                </div>
-                {index < STEPS.length - 1 && (
-                  <div
-                    className={`flex-1 h-1 mx-2 ${
-                      currentStep > step.id
-                        ? "bg-blue-600"
-                        : "bg-slate-300 dark:bg-slate-600"
-                    }`}
-                  />
-                )}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4" dir="rtl">
+      <div className="max-w-2xl mx-auto py-8">
+        <h1 className="text-2xl font-black text-blue-600 mb-8 text-center">إتمام الطلب - EraSport</h1>
+        
+        {/* خطوات التقدم */}
+        <div className="flex justify-between mb-8">
+          {STEPS.map((step) => (
+            <div key={step.id} className="flex flex-col items-center flex-1">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold mb-2 ${currentStep >= step.id ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}>
+                {step.id}
               </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-2 text-sm">
-            {STEPS.map(step => (
-              <div key={step.id} className="text-center flex-1">
-                <p className="font-semibold">{step.title}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">{step.description}</p>
-              </div>
-            ))}
-          </div>
+              <span className="text-xs font-bold">{step.title}</span>
+            </div>
+          ))}
         </div>
 
-        {/* Step Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{STEPS[currentStep - 1].title}</CardTitle>
-            <CardDescription>{STEPS[currentStep - 1].description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Step 1: Personal Info */}
+        <Card className="border-0 shadow-xl rounded-2xl">
+          <CardContent className="p-6">
             {currentStep === 1 && (
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="fullName">الاسم الكامل *</Label>
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    value={personalInfo.fullName}
-                    onChange={handlePersonalInfoChange}
-                    placeholder="أدخل اسمك الكامل"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="primaryPhone">رقم الهاتف الأساسي *</Label>
-                  <Input
-                    id="primaryPhone"
-                    name="primaryPhone"
-                    value={personalInfo.primaryPhone}
-                    onChange={handlePersonalInfoChange}
-                    placeholder="+20..."
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="backupPhone">رقم الهاتف البديل</Label>
-                  <Input
-                    id="backupPhone"
-                    name="backupPhone"
-                    value={personalInfo.backupPhone}
-                    onChange={handlePersonalInfoChange}
-                    placeholder="+20..."
-                  />
-                </div>
+                <Label>الاسم الكامل</Label>
+                <Input name="fullName" value={personalInfo.fullName} onChange={handlePersonalInfoChange} placeholder="اكتب اسمك هنا" className="h-12" />
+                <Label>رقم الهاتف</Label>
+                <Input name="primaryPhone" value={personalInfo.primaryPhone} onChange={handlePersonalInfoChange} placeholder="01XXXXXXXXX" className="h-12" />
+                <Label>رقم هاتف بديل (اختياري)</Label>
+                <Input name="backupPhone" value={personalInfo.backupPhone} onChange={handlePersonalInfoChange} placeholder="01XXXXXXXXX" className="h-12" />
               </div>
             )}
 
-            {/* Step 2: Location */}
             {currentStep === 2 && (
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="address">العنوان الكامل *</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    value={location.address}
-                    onChange={handleLocationChange}
-                    placeholder="أدخل عنوانك الكامل"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="city">المدينة *</Label>
-                    <Input
-                      id="city"
-                      name="city"
-                      value={location.city}
-                      onChange={handleLocationChange}
-                      placeholder="أدخل مدينتك"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="country">الدولة *</Label>
-                    <Input
-                      id="country"
-                      name="country"
-                      value={location.country}
-                      onChange={handleLocationChange}
-                      placeholder="أدخل دولتك"
-                    />
-                  </div>
-                </div>
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex gap-2">
-                  <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-600 dark:text-blue-400">
-                    سيتم استخدام هذا العنوان لتسليم الطلب
-                  </p>
-                </div>
+                <Label>العنوان بالتفصيل</Label>
+                <Input name="address" value={location.address} onChange={handleLocationChange} placeholder="اسم الشارع / رقم العمارة" className="h-12" />
+                <Label>المدينة</Label>
+                <Input name="city" value={location.city} onChange={handleLocationChange} placeholder="مثلاً: القاهرة" className="h-12" />
               </div>
             )}
 
-            {/* Step 3: Sizing */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <RadioGroup
-                  value={sizing.sizeMethod}
-                  onValueChange={(value) => setSizing(prev => ({ ...prev, sizeMethod: value }))}
-                >
-                  <div className="space-y-4">
-                    {/* Size Selection */}
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <RadioGroupItem value="size" id="size-method" />
-                        <Label htmlFor="size-method" className="cursor-pointer font-semibold">
-                          اختر المقاس
-                        </Label>
-                      </div>
-                      {sizing.sizeMethod === "size" && (
-                        <div className="grid grid-cols-5 gap-2 ml-6">
-                          {SIZES.map(size => (
-                            <Button
-                              key={size}
-                              variant={sizing.selectedSize === size ? "default" : "outline"}
-                              onClick={() => setSizing(prev => ({ ...prev, selectedSize: size }))}
-                              className="w-full"
-                            >
-                              {size}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Weight Input */}
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-4">
-                        <RadioGroupItem value="weight" id="weight-method" />
-                        <Label htmlFor="weight-method" className="cursor-pointer font-semibold">
-                          أدخل وزنك (سيتم اقتراح المقاس تلقائياً)
-                        </Label>
-                      </div>
-                      {sizing.sizeMethod === "weight" && (
-                        <div className="ml-6 space-y-4">
-                          <div>
-                            <Input
-                              type="number"
-                              value={sizing.weight}
-                              onChange={handleWeightChange}
-                              placeholder="أدخل وزنك بالكيلوجرام (50-200)"
-                              min="50"
-                              max="200"
-                            />
-                          </div>
-                          {suggestedSize && (
-                            <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                              <p className="text-sm text-green-600 dark:text-green-400">
-                                المقاس المقترح: <span className="font-bold text-lg">{suggestedSize}</span>
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                <RadioGroup value={sizing.sizeMethod} onValueChange={(v) => setSizing(p => ({ ...p, sizeMethod: v }))}>
+                  <div className="border rounded-xl p-4 flex items-center gap-3">
+                    <RadioGroupItem value="size" id="s1" />
+                    <Label htmlFor="s1" className="flex-1 cursor-pointer">اختر المقاس يدوياً</Label>
                   </div>
+                  {sizing.sizeMethod === "size" && (
+                    <div className="grid grid-cols-5 gap-2 mt-2">
+                      {SIZES.map(s => (
+                        <Button key={s} variant={sizing.selectedSize === s ? "default" : "outline"} onClick={() => setSizing(p => ({ ...p, selectedSize: s }))}>{s}</Button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="border rounded-xl p-4 flex items-center gap-3 mt-4">
+                    <RadioGroupItem value="weight" id="s2" />
+                    <Label htmlFor="s2" className="flex-1 cursor-pointer">حدد مقاسي حسب وزني</Label>
+                  </div>
+                  {sizing.sizeMethod === "weight" && (
+                    <div className="mt-2 space-y-3">
+                      <Input type="number" value={sizing.weight} onChange={handleWeightChange} placeholder="وزنك بالكيلوجرام" className="h-12" />
+                      {suggestedSize && <div className="p-3 bg-blue-50 text-blue-700 rounded-lg font-bold text-center">المقاس المقترح: {suggestedSize}</div>}
+                    </div>
+                  )}
                 </RadioGroup>
               </div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex gap-4 pt-6 border-t">
-              <Button
-                onClick={handlePreviousStep}
-                variant="outline"
-                disabled={currentStep === 1}
-                className="flex-1"
-              >
-                السابق
-              </Button>
-              {currentStep < STEPS.length ? (
-                <Button
-                  onClick={handleNextStep}
-                  className="flex-1"
-                >
-                  التالي
-                  <ChevronRight className="w-4 h-4 mr-2" />
-                </Button>
+            <div className="flex gap-4 mt-8">
+              {currentStep > 1 && <Button onClick={() => setCurrentStep(currentStep - 1)} variant="outline" className="flex-1 h-12">السابق</Button>}
+              {currentStep < 3 ? (
+                <Button onClick={() => setCurrentStep(currentStep + 1)} className="flex-1 h-12 bg-blue-600">التالي</Button>
               ) : (
-                <Button
-                  onClick={handleCompleteCheckout}
-                  disabled={isLoading}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      جاري المعالجة...
-                    </>
-                  ) : (
-                    "إتمام الطلب عبر WhatsApp"
-                  )}
+                <Button onClick={handleCompleteCheckout} disabled={isLoading} className="flex-1 h-12 bg-green-600 hover:bg-green-700">
+                  {isLoading ? <Loader2 className="animate-spin" /> : "إتمام الطلب الآن"}
                 </Button>
               )}
             </div>
@@ -421,3 +215,4 @@ ${location.city}, ${location.country}
     </div>
   );
 }
+
