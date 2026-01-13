@@ -11,6 +11,7 @@ import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import AdminDashboard from "./pages/Admin"; // استيراد صفحة لوحة التحكم الجديدة
+import ProductDetails from "./pages/ProductDetails";
 
 function Router() {
   return (
