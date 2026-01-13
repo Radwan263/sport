@@ -1,87 +1,76 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, ShoppingBag, Zap, TrendingUp, Shield } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Zap, TrendingUp, Shield, Users, Baby } from "lucide-react";
 import { useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-900">
+    <div className="min-h-screen bg-white dark:bg-slate-900" dir="rtl">
       {/* Navigation */}
-      <nav className="border-b border-slate-200 dark:border-slate-800">
+      <nav className="border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 bg-white/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            ⚽ متجر الملابس الرياضية
-          </h1>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+             {/* هنا تقدر تحط اللوجو بتاعك مستقبلاً */}
+            <h1 className="text-3xl font-black tracking-tighter text-blue-700 dark:text-blue-500">
+              ERA<span className="text-slate-900 dark:text-white">SPORT</span>
+            </h1>
+          </div>
+          
+          <div className="flex gap-3">
             {isAuthenticated ? (
-              <>
-                <Button onClick={() => navigate("/profile")} variant="outline">
-                  {user?.name || "ملفي"}
-                </Button>
-                <Button onClick={() => navigate("/shop")}>
-                  متجري
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                </Button>
-              </>
+              <Button onClick={() => navigate("/profile")} variant="ghost" className="font-bold">
+                {user?.name || "حسابي"}
+              </Button>
             ) : (
-              <>
-                <Button
-                  onClick={() => navigate("/auth")}
-                  variant="outline"
-                >
-                  دخول
-                </Button>
-                <Button onClick={() => navigate("/shop")}>
-                  ابدأ التسوق
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                </Button>
-              </>
+              <Button onClick={() => navigate("/auth")} variant="ghost" className="font-bold">
+                دخول
+              </Button>
             )}
+            <Button onClick={() => navigate("/shop")} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200">
+              تسوق الآن
+              <ArrowLeft className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-900" />
-        <div className="relative max-w-7xl mx-auto px-4 py-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h2 className="text-5xl md:text-6xl font-bold leading-tight">
-                ارتدِ روح الفريق
+      <section className="relative pt-16 pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-slate-50 dark:bg-slate-800/50 -z-10" />
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8 text-right">
+              <div className="inline-block px-4 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                وصل حديثاً: تشكيلة شتاء 2025 ❄️
+              </div>
+              <h2 className="text-5xl md:text-7xl font-black leading-[1.1] text-slate-900 dark:text-white">
+                أداء رياضي <br />
+                <span className="text-blue-600">بلا حدود</span>
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-400">
-                اكتشف أفضل تشكيلة من قمصان الأندية والمنتخبات الرياضية بجودة عالية وأسعار منافسة
+              <p className="text-xl text-slate-600 dark:text-slate-400 max-w-lg leading-relaxed">
+                في EraSport، نقدم لك أجود ملابس الرياضة الرجالية وأطقم الأطفال المصممة لتحمل أصعب التمارين وبأحدث صيحات الموضة.
               </p>
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => navigate("/shop")}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  تسوق الآن
-                  <ArrowRight className="w-5 h-5 mr-2" />
+              <div className="flex flex-wrap gap-4">
+                <Button onClick={() => navigate("/shop")} size="lg" className="h-14 px-8 text-lg bg-blue-600 hover:bg-blue-700">
+                  قسم الرجال
                 </Button>
-                <Button
-                  onClick={() => navigate("/shop")}
-                  size="lg"
-                  variant="outline"
-                >
-                  اعرف المزيد
+                <Button onClick={() => navigate("/shop")} size="lg" variant="outline" className="h-14 px-8 text-lg border-2">
+                  قسم الأطفال
                 </Button>
               </div>
             </div>
-            <div className="relative">
-              <div className="w-full aspect-square bg-gradient-to-br from-blue-400 to-purple-400 rounded-2xl overflow-hidden">
+            
+            <div className="relative group">
+              <div className="absolute -inset-4 bg-blue-500/10 rounded-[2rem] blur-2xl group-hover:bg-blue-500/20 transition-all" />
+              <div className="relative rounded-[2rem] overflow-hidden border-4 border-white dark:border-slate-700 shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop"
-                  alt="Sports Jersey"
-                  className="w-full h-full object-cover"
+                  src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80"
+                  alt="Men Fitness"
+                  className="w-full h-[500px] object-cover"
                 />
               </div>
             </div>
@@ -89,102 +78,75 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-slate-50 dark:bg-slate-800">
+      {/* Quick Categories - التخصص: رجالي وأطفال */}
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4">
-          <h3 className="text-3xl font-bold text-center mb-12">لماذا نحن؟</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: ShoppingBag,
-                title: "تشكيلة واسعة",
-                description: "أندية وفرق من حول العالم",
-              },
-              {
-                icon: Zap,
-                title: "جودة عالية",
-                description: "منتجات أصلية وموثوقة",
-              },
-              {
-                icon: TrendingUp,
-                title: "أسعار منافسة",
-                description: "أفضل قيمة مقابل المال",
-              },
-              {
-                icon: Shield,
-                title: "شراء آمن",
-                description: "دفع آمن وسهل عبر WhatsApp",
-              },
-            ].map((feature, index) => (
-              <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-6 text-center space-y-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center mx-auto">
-                    <feature.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h4 className="font-semibold text-lg">{feature.title}</h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Men's Card */}
+            <div 
+              onClick={() => navigate("/shop")}
+              className="relative h-80 rounded-3xl overflow-hidden cursor-pointer group"
+            >
+              <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-black/40 flex items-end p-8">
+                <div className="text-white">
+                  <Users className="w-10 h-10 mb-2" />
+                  <h4 className="text-3xl font-bold">ملابس رجالية</h4>
+                  <p className="opacity-80">تيشرتات، بنطلونات، وترينجات</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Kids' Card */}
+            <div 
+              onClick={() => navigate("/shop")}
+              className="relative h-80 rounded-3xl overflow-hidden cursor-pointer group"
+            >
+              <img src="https://images.unsplash.com/photo-1519340241574-2bc3993c66f9?w=600" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-blue-900/40 flex items-end p-8">
+                <div className="text-white">
+                  <Baby className="w-10 h-10 mb-2" />
+                  <h4 className="text-3xl font-bold">ملابس أطفال</h4>
+                  <p className="opacity-80">أطقم رياضية مريحة للصغار</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Categories Preview */}
-      <section className="py-20">
+      {/* Why EraSport? */}
+      <section className="py-20 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4">
-          <h3 className="text-3xl font-bold mb-12">تصنيفاتنا</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center mb-16 space-y-4">
+            <h3 className="text-4xl font-bold">لماذا تختار EraSport؟</h3>
+            <p className="text-slate-400">نحن نهتم بالتفاصيل التي تمنحك الأفضلية</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {[
-              { icon: "🧥", label: "Hoodies" },
-              { icon: "👕", label: "T-shirts" },
-              { icon: "🇪🇬", label: "منتخب مصر" },
-              { icon: "🔴", label: "النادي الأهلي" },
-              { icon: "⚽", label: "أندية أخرى" },
-              { icon: "🇪🇺", label: "الأندية الأوروبية" },
-              { icon: "🏆", label: "المنتخبات" },
-              { icon: "🌍", label: "المزيد" },
-            ].map((category, index) => (
-              <Button
-                key={index}
-                onClick={() => navigate("/shop")}
-                variant="outline"
-                className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 dark:hover:bg-slate-800"
-              >
-                <span className="text-3xl">{category.icon}</span>
-                <span className="text-sm font-medium">{category.label}</span>
-              </Button>
+              { icon: Zap, title: "خامات ذكية", desc: "أقمشة طاردة للعرق وسريعة الجفاف" },
+              { icon: TrendingUp, title: "أحدث الموديلات", desc: "تصميمات عصرية تناسب الجيم والخروج" },
+              { icon: Shield, title: "ضمان الاستبدال", desc: "سياسة استبدال مرنة لضمان رضاك" },
+            ].map((item, i) => (
+              <div key={i} className="text-center space-y-4 p-6 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors">
+                <item.icon className="w-12 h-12 text-blue-500 mx-auto" />
+                <h4 className="text-xl font-bold">{item.title}</h4>
+                <p className="text-slate-400">{item.desc}</p>
+              </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-7xl mx-auto px-4 text-center text-white space-y-6">
-          <h3 className="text-4xl font-bold">هل أنت مستعد؟</h3>
-          <p className="text-lg opacity-90">
-            اكتشف أفضل تشكيلة من قمصان الأندية والمنتخبات الرياضية
-          </p>
-          <Button
-            onClick={() => navigate("/shop")}
-            size="lg"
-            className="bg-white text-blue-600 hover:bg-slate-100"
-          >
-            ابدأ التسوق الآن
-            <ArrowRight className="w-5 h-5 mr-2" />
-          </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 py-8 bg-slate-50 dark:bg-slate-800">
-        <div className="max-w-7xl mx-auto px-4 text-center text-slate-600 dark:text-slate-400">
-          <p>&copy; 2024 متجر الملابس الرياضية. جميع الحقوق محفوظة.</p>
+      <footer className="py-12 border-t border-slate-200 dark:border-slate-800 text-center">
+        <h2 className="text-2xl font-black text-blue-600 mb-4">ERA SPORT</h2>
+        <p className="text-slate-500">العنوان: القاهرة، مصر | واتساب: 010XXXXXXXX</p>
+        <div className="mt-6 text-sm text-slate-400">
+          &copy; {new Date().getFullYear()} EraSport. جميع الحقوق محفوظة.
         </div>
       </footer>
     </div>
   );
 }
+
