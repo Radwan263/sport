@@ -8,7 +8,7 @@ import { Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-// ✅ بيانات البوت (تأكد إنها صحيحة)
+// ✅ بيانات البوت الخاصة بيك
 const TELEGRAM_BOT_TOKEN = "7710056851:AAHFHJswIqf4c7h3HEN5LPGqhSuVZcHY2i8";
 const TELEGRAM_CHAT_ID = "6059260672";
 
@@ -26,12 +26,26 @@ export default function Checkout() {
     shipping: 50, // مصاريف الشحن
   });
 
+  // توجيه لو السلة فاضية
   useEffect(() => {
     if (items.length === 0) navigate("/shop");
   }, [items, navigate]);
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
-  if (!isAuthenticated) { navigate("/auth"); return null; }
+  // شاشة التحميل
+  if (isLoading) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin w-10 h-10 text-blue-600" />
+        <p className="text-slate-500 font-bold">جاري التحقق من الحساب...</p>
+      </div>
+    );
+  }
+
+  // توجيه لو مش مسجل دخول
+  if (!isAuthenticated) {
+    navigate("/auth");
+    return null;
+  }
 
   // --- 📩 دالة إرسال الإشعار لتليجرام ---
   const sendTelegramNotification = async () => {
@@ -41,7 +55,7 @@ export default function Checkout() {
     // 2. تجهيز العنوان كامل (المحافظة + الشارع)
     const fullAddress = `${address.city} - ${address.street}`;
 
-    // 3. تنسيق الرسالة النهائي
+    // 3. تنسيق الرسالة (زي ما طلبت بالظبط)
     const message = `
 اسم الشركه Era Store
 رقم الشركه 01095442297
@@ -53,7 +67,8 @@ ${totalPrice}+${address.shipping} شحن
 `;
 
     try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      // إرسال الطلب لـ API تليجرام
+      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -61,8 +76,19 @@ ${totalPrice}+${address.shipping} شحن
           text: message,
         }),
       });
+
+      const data = await response.json();
+
+      // 🔍 كشف الأخطاء: لو الرسالة موصلتش طلعلي السبب
+      if (!data.ok) {
+        alert(`تنبيه: الرسالة موصلتش تليجرام! \nالسبب: ${data.description}`);
+        console.error("Telegram Error:", data);
+      } else {
+        console.log("تم إرسال الإشعار بنجاح ✅");
+      }
+
     } catch (error) {
-      console.error("خطأ في الإرسال لتليجرام", error);
+      console.error("خطأ في الاتصال بتليجرام", error);
     }
   };
 
@@ -72,7 +98,7 @@ ${totalPrice}+${address.shipping} شحن
     setIsSubmitting(true);
 
     try {
-      // حفظ في Supabase
+      // 1. حفظ في Supabase
       const { error } = await supabase.from('orders').insert([{
         user_id: user?.id,
         items: items,
@@ -83,7 +109,7 @@ ${totalPrice}+${address.shipping} شحن
 
       if (error) throw error;
 
-      // إرسال الإشعار
+      // 2. إرسال الإشعار
       await sendTelegramNotification();
       
       toast.success("تم استلام طلبك بنجاح! 🎉");
@@ -190,3 +216,4 @@ ${totalPrice}+${address.shipping} شحن
     </div>
   );
 }
+
