@@ -1,85 +1,35 @@
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, LogOut } from "lucide-react";
-import { getLoginUrl } from "@/const";
-import { useLocation } from "wouter";
-import { useEffect } from "react";
+/**
+ * هذا الملف يحتوي على الثوابت والدوال المساعدة للروابط
+ * تم تعديل الكود لمنع حدوث "TypeError: Invalid URL" في بيئة Netlify
+ */
 
-export default function Auth() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
-  const [, navigate] = useLocation();
+export const getLoginUrl = () => {
+  // 1. تحديد الرابط الأساسي (استخدام رابط الموقع الحالي كبديل في حالة عدم وجود المتغير)
+  const baseUrl = import.meta.env.VITE_MANUS_APP_URL || window.location.origin;
+  const appId = import.meta.env.VITE_MANUS_APP_ID || "";
+  
+  try {
+    // 2. إنشاء الرابط ومحاولة تجنب أي قيمة undefined
+    // السطر ده كان سبب الكراش وتم تأمينه الآن
+    const loginUrl = new URL(`${baseUrl}/app-auth`);
+    
+    // 3. إعداد رابط الرجوع بعد تسجيل الدخول
+    const redirectUri = `${window.location.origin}/api/oauth/callback`;
+    const state = btoa(redirectUri);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/profile");
-    }
-  }, [isAuthenticated, navigate]);
+    // 4. إضافة البارامترات المطلوبة
+    loginUrl.searchParams.set("appId", appId);
+    loginUrl.searchParams.set("redirectUri", redirectUri);
+    loginUrl.searchParams.set("state", state);
+    loginUrl.searchParams.set("type", "signIn");
 
-  const handleLogin = () => {
-    window.location.href = getLoginUrl();
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin w-8 h-8" />
-      </div>
-    );
+    return loginUrl.toString();
+  } catch (error) {
+    // في حالة حدوث أي خطأ في بناء الرابط، نطبع تحذير ونرجع رابط وهمي بدل ما نوقع الموقع
+    console.error("Configuration Error: Check VITE_MANUS_APP_URL", error);
+    return "#"; 
   }
+};
 
-  if (isAuthenticated && user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>مرحباً بك</CardTitle>
-            <CardDescription>أنت مسجل دخول بالفعل</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>الاسم</Label>
-              <p className="text-sm font-medium">{user.name || "مستخدم"}</p>
-            </div>
-            <div className="space-y-2">
-              <Label>البريد الإلكتروني</Label>
-              <p className="text-sm font-medium">{user.email || "غير محدد"}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate("/profile")} className="flex-1">
-                ملفي الشخصي
-              </Button>
-              <Button onClick={handleLogout} variant="outline" className="flex-1">
-                <LogOut className="w-4 h-4 mr-2" />
-                تسجيل الخروج
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>تسجيل الدخول</CardTitle>
-          <CardDescription>سجل دخولك للوصول إلى حسابك</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={handleLogin} className="w-full">
-            تسجيل الدخول عبر Manus
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+// أي ثوابت تانية ممكن تكون عندك في الملف (أضفها هنا لو موجودة)
+export const APP_NAME = "EraSport";
