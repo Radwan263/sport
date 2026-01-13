@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/_core/hooks/AuthContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ ده الصح
 import { useCart } from "@/contexts/CartContext";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
