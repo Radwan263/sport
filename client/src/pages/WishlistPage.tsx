@@ -69,10 +69,11 @@ export default function WishlistPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 border-2 border-dashed rounded-xl">
+          <div className="text-center py-20 border-2 border-dashed rounded-xl border-slate-300">
             <Heart className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-400">القائمة فارغة</h3>
-            <Button variant="link" onClick={() => navigate("/shop")}>تصفح المنتجات</Button>
+            <h3 className="text-xl font-bold text-slate-400">القائمة فارغة 💔</h3>
+            <p className="text-slate-500 mb-4">أضف بعض المنتجات التي تعجبك هنا.</p>
+            <Button variant="link" onClick={() => navigate("/shop")} className="text-blue-600 font-bold">تصفح المنتجات</Button>
           </div>
         )}
       </div>
