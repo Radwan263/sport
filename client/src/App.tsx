@@ -37,18 +37,29 @@ function Router() {
     </Switch>
   );
 }
-
 function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <AuthProvider> 
-          {/* ✅ لازم WishlistProvider يكون جوه AuthProvider */}
           <WishlistProvider> 
             <CartProvider>
               <TooltipProvider>
                 <Toaster />
                 <Router />
+
+                {/* 👇👇👇 الصق كود الواتساب هنا بالظبط 👇👇👇 */}
+                <a 
+                  href="https://wa.me/201143207766" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-3 md:p-4 rounded-full shadow-lg hover:bg-green-600 transition-all hover:scale-110 flex items-center gap-2 font-bold animate-in fade-in zoom-in"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  <span className="hidden md:inline">تواصل معنا</span>
+                </a>
+                {/* 👆👆👆 نهاية كود الواتساب 👆👆👆 */}
+
               </TooltipProvider>
             </CartProvider>
           </WishlistProvider>
@@ -59,3 +70,4 @@ function App() {
 }
 
 export default App;
+
