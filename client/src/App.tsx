@@ -4,8 +4,9 @@ import NotFound from "./pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { CartProvider } from "./contexts/CartContext"; // استدعاء السلة
-import { AuthProvider } from "./contexts/AuthContext"; // استدعاء نظام الدخول الجديد
+import { CartProvider } from "./contexts/CartContext"; 
+import { AuthProvider } from "./contexts/AuthContext"; 
+import { WishlistProvider } from "./contexts/WishlistContext"; // ✅ استدعاء جديد
 
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -15,6 +16,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import AdminDashboard from "./pages/Admin";
 import ProductDetails from "./pages/ProductDetails";
+import WishlistPage from "./pages/WishlistPage"; // ✅ صفحة المفضلة
 
 function Router() {
   return (
@@ -24,6 +26,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/shop" component={Shop} />
       <Route path="/cart" component={Cart} />
+      <Route path="/wishlist" component={WishlistPage} /> {/* ✅ الرابط الجديد */}
       <Route path="/checkout" component={Checkout} />
       <Route path="/product/:id" component={ProductDetails} />
       <Route path="/admin" component={AdminDashboard} /> 
@@ -38,14 +41,16 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        {/* ✅ الترتيب مهم: AuthProvider الأول عشان يغطي السلة والتطبيق */}
         <AuthProvider> 
-          <CartProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </CartProvider>
+          {/* ✅ لازم WishlistProvider يكون جوه AuthProvider */}
+          <WishlistProvider> 
+            <CartProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Router />
+              </TooltipProvider>
+            </CartProvider>
+          </WishlistProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
