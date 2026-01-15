@@ -9,10 +9,9 @@ import { Loader2, MapPin, Ticket, CreditCard, Banknote, Upload, Smartphone, Aler
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-// ✅ بيانات البوت
-const TELEGRAM_BOT_TOKEN = "7710056851:AAHFHJswIqf4c7h3HEN5LPGqhSuVZcHY2i8";
-const TELEGRAM_CHAT_ID = "654471191";
-
+// ✅ بيانات البوت الجديدة
+const TELEGRAM_BOT_TOKEN = "8505898687:AAHyu68rTcmpCjsm4DrBiN-2L7osaQLGd88";
+const TELEGRAM_CHAT_ID = "1414736450";
 // ✅ قائمة المحافظات
 const GOVERNORATES = [
   { name: "القاهرة", price: 70 },
