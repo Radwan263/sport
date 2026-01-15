@@ -1,127 +1,83 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ShoppingBag, Truck, CreditCard, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShoppingBag, User } from "lucide-react"; // ضفنا User
+import { useCart } from "@/contexts/CartContext"; // عشان عداد السلة
 
 export default function Home() {
   const [, navigate] = useLocation();
+  const { totalItems } = useCart();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // بيانات السلايدر (تقدر تغير النصوص والألوان براحتك)
   const slides = [
-    {
-      title: "أقوى كولكشن شتوي",
-      subtitle: "خصومات تصل لـ 50% على جميع الهوديز",
-      bg: "bg-slate-900", // لون الخلفية (ممكن تخليه صورة لو حبيت)
-      btnColor: "bg-blue-600"
-    },
-    {
-      title: "دفع إلكتروني آمن",
-      subtitle: "خصم 10% إضافي عند الدفع بفودافون كاش أو انستا باي",
-      bg: "bg-blue-900",
-      btnColor: "bg-red-600"
-    },
-    {
-      title: "شحن لجميع المحافظات",
-      subtitle: "اطلب دلوقتي ويوصلك لحد باب البيت",
-      bg: "bg-black",
-      btnColor: "bg-green-600"
-    }
+    { title: "تيشيرتات الموسم الجديد", subtitle: "شجع فريقك بأفضل خامة وأقل سعر", bg: "bg-red-700", btnColor: "bg-slate-900" }, // لون أحمر عشان الأهلي 😉
+    { title: "عروض الأندية الأوروبية", subtitle: "خصم خاص عند طلب قطعتين أو أكثر", bg: "bg-blue-900", btnColor: "bg-white text-blue-900" }
   ];
 
-  // كود التحريك التلقائي للسلايدر
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000); // بيقلب كل 4 ثواني
+    const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % slides.length), 4000);
     return () => clearInterval(timer);
   }, []);
+
+  // قائمة الأقسام الجديدة
+  const categories = [
+    { id: 'ahly', title: 'النادي الأهلي 🦅', color: 'bg-red-50 text-red-700 border-red-200' },
+    { id: 'arab_clubs', title: 'أندية عربية 🇸🇦', color: 'bg-green-50 text-green-700 border-green-200' },
+    { id: 'euro_clubs', title: 'أندية أوروبية 🇪🇺', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+    { id: 'arab_teams', title: 'منتخبات عربية 🌍', color: 'bg-slate-50 text-slate-700 border-slate-200' },
+    { id: 'euro_teams', title: 'منتخبات أوروبية 🏆', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  ];
 
   return (
     <div className="min-h-screen bg-white" dir="rtl">
       
-      {/* === Hero Slider (البنر المتحرك) === */}
-      <div className="relative h-[450px] md:h-[550px] overflow-hidden">
-        {slides.map((slide, index) => (
-          <div 
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center text-center px-4 ${
-              index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
-            } ${slide.bg}`}
-          >
-             <div className="max-w-2xl text-white space-y-6 animate-in zoom-in duration-700">
-               <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
-                 {slide.title}
-               </h1>
-               <p className="text-lg md:text-2xl text-slate-200 font-medium">
-                 {slide.subtitle}
-               </p>
-               <Button 
-                 onClick={() => navigate("/shop")} 
-                 className={`h-14 px-10 text-xl font-bold rounded-full shadow-lg ${slide.btnColor} hover:scale-105 transition-transform`}
-               >
-                 تسوق الآن <ArrowRight className="w-6 h-6 mr-2" />
-               </Button>
-             </div>
-          </div>
-        ))}
-        
-        {/* نقاط التنقل (Dots) تحت */}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-20">
-          {slides.map((_, i) => (
-            <button
-              key={i} 
-              onClick={() => setCurrentSlide(i)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${i === currentSlide ? "bg-white w-8" : "bg-white/40 hover:bg-white/80"}`} 
-            />
-          ))}
-        </div>
-      </div>
+      {/* === Header (اللوجو + البروفايل + السلة) === */}
+      <div className="flex justify-between items-center p-4 sticky top-0 z-50 bg-white/80 backdrop-blur shadow-sm">
+         <h1 className="text-2xl font-black text-slate-900 cursor-pointer" onClick={() => navigate("/")}>
+           ERA<span className="text-red-600">SPORT</span>
+         </h1>
+         
+         <div className="flex gap-3">
+           {/* زر البروفايل */}
+           <Button variant="ghost" size="icon" onClick={() => navigate("/profile")} className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700">
+             <User className="w-5 h-5" />
+           </Button>
 
-      {/* === Features (مميزات الموقع) === */}
-      <div className="py-16 bg-slate-50">
-         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 px-6">
-            
-            {/* ميزة 1 */}
-            <div className="flex flex-col items-center text-center p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-               <div className="bg-blue-50 p-5 rounded-full text-blue-600 mb-6">
-                 <Truck className="w-10 h-10"/>
-               </div>
-               <h3 className="font-black text-xl mb-2 text-slate-900">شحن سريع ومضمون</h3>
-               <p className="text-slate-500 font-medium">توصيل لجميع محافظات مصر خلال 3-5 أيام عمل مع إمكانية المعاينة.</p>
-            </div>
-
-            {/* ميزة 2 */}
-            <div className="flex flex-col items-center text-center p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-               <div className="bg-green-50 p-5 rounded-full text-green-600 mb-6">
-                 <ShieldCheck className="w-10 h-10"/>
-               </div>
-               <h3 className="font-black text-xl mb-2 text-slate-900">خامات عالية الجودة</h3>
-               <p className="text-slate-500 font-medium">ضمان استبدال واسترجاع خلال 14 يوم لو المنتج معجبكش.</p>
-            </div>
-
-            {/* ميزة 3 */}
-            <div className="flex flex-col items-center text-center p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-               <div className="bg-purple-50 p-5 rounded-full text-purple-600 mb-6">
-                 <CreditCard className="w-10 h-10"/>
-               </div>
-               <h3 className="font-black text-xl mb-2 text-slate-900">طرق دفع متعددة</h3>
-               <p className="text-slate-500 font-medium">دفع عند الاستلام، أو خصم خاص للدفع بفودافون كاش وانستا باي.</p>
-            </div>
-
+           {/* زر السلة */}
+           <Button variant="ghost" size="icon" onClick={() => navigate("/cart")} className="rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 relative">
+             <ShoppingBag className="w-5 h-5" />
+             {totalItems > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{totalItems}</span>}
+           </Button>
          </div>
       </div>
 
-      {/* === Call to Action (دعوة أخيرة) === */}
-      <div className="py-20 text-center">
-        <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-6">جاهز تختار طقمك الجديد؟</h2>
-        <Button 
-          onClick={() => navigate("/shop")} 
-          variant="outline"
-          className="h-14 px-12 text-xl font-bold rounded-full border-2 border-slate-900 text-slate-900 hover:bg-slate-900 hover:text-white transition-colors"
-        >
-          <ShoppingBag className="w-5 h-5 ml-2" /> عرض كل المنتجات
-        </Button>
+      {/* === Slider === */}
+      <div className="relative h-[400px] overflow-hidden">
+        {slides.map((slide, index) => (
+          <div key={index} className={`absolute inset-0 transition-opacity duration-1000 flex items-center justify-center text-center px-4 ${index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"} ${slide.bg}`}>
+             <div className="max-w-2xl text-white space-y-4 animate-in zoom-in">
+               <h1 className="text-4xl md:text-5xl font-black">{slide.title}</h1>
+               <p className="text-lg">{slide.subtitle}</p>
+               <Button onClick={() => navigate("/shop")} className={`font-bold rounded-full ${slide.btnColor}`}>تصفح المتجر <ArrowRight className="ml-2 w-4 h-4"/></Button>
+             </div>
+          </div>
+        ))}
+      </div>
+
+      {/* === الأقسام (Categories) === */}
+      <div className="py-12 max-w-7xl mx-auto px-4">
+         <h2 className="text-2xl font-black text-center mb-8 text-slate-900">تسوق حسب القسم</h2>
+         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {categories.map((cat) => (
+              <div 
+                key={cat.id}
+                onClick={() => navigate(`/shop?cat=${cat.id}`)} // هيروح للمتجر ويفلتر بالقسم ده
+                className={`p-6 rounded-2xl border-2 cursor-pointer transition-all hover:scale-105 hover:shadow-lg flex flex-col items-center justify-center text-center h-32 ${cat.color}`}
+              >
+                <h3 className="font-bold text-sm md:text-lg">{cat.title}</h3>
+              </div>
+            ))}
+         </div>
       </div>
 
     </div>
