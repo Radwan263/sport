@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Ticket, CheckCircle, ShoppingBag, Banknote, Package, TrendingUp } from "lucide-react";
+import { Loader2, Plus, Trash2, Ticket, CheckCircle, ShoppingBag, Banknote, Package, XCircle } from "lucide-react"; // ضفنا XCircle
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -15,7 +15,6 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
   
-  // ✅ عدلنا القيمة الافتراضية هنا لتكون "ahly" بدلاً من "men"
   const [newProduct, setNewProduct] = useState({ name: "", price: "", category: "ahly", image_url: "", description: "" });
   const [newCoupon, setNewCoupon] = useState({ code: "", discount_percent: "" });
   const [isAdding, setIsAdding] = useState(false);
@@ -66,7 +65,6 @@ export default function AdminDashboard() {
     const { error } = await supabase.from('products').insert([newProduct]); 
     if (!error) { 
       toast.success("تم النشر"); 
-      // إعادة تعيين الفورم
       setNewProduct({ name: "", price: "", category: "ahly", image_url: "", description: "" }); 
       fetchProducts(); 
     } 
@@ -74,7 +72,21 @@ export default function AdminDashboard() {
   };
   
   const handleDeleteProduct = async (id: string) => { if(!confirm("حذف؟")) return; await supabase.from('products').delete().eq('id', id); fetchProducts(); };
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => { setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o)); await supabase.from('orders').update({ status: newStatus }).eq('id', orderId); toast.success("تم تحديث الحالة"); };
+  
+  // ✅ دالة تحديث الحالة (بتشتغل للرفض والقبول)
+  const handleUpdateStatus = async (orderId: string, newStatus: string) => { 
+    // تحديث الواجهة فوراً
+    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o)); 
+    // تحديث الداتا بيز
+    await supabase.from('orders').update({ status: newStatus }).eq('id', orderId); 
+    
+    if (newStatus === 'cancelled') {
+        toast.error("تم إلغاء الطلب ورفض الدفع ❌");
+    } else {
+        toast.success("تم تحديث الحالة ✅");
+    }
+  };
+
   const handleAddCoupon = async (e: React.FormEvent) => { e.preventDefault(); const { error } = await supabase.from('coupons').insert([{ code: newCoupon.code.toUpperCase(), discount_percent: Number(newCoupon.discount_percent) }]); if (!error) { toast.success("تم الكوبون"); setNewCoupon({ code: "", discount_percent: "" }); fetchCoupons(); } };
   const handleDeleteCoupon = async (id: string) => { if(!confirm("حذف؟")) return; await supabase.from('coupons').delete().eq('id', id); fetchCoupons(); };
 
@@ -102,40 +114,31 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ✅ إحصائيات سريعة */}
+        {/* إحصائيات سريعة */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-400">إجمالي المبيعات</p>
-                <h3 className="text-2xl font-black text-slate-900">{totalSales} ج.م</h3>
-              </div>
+              <div><p className="text-sm font-bold text-slate-400">إجمالي المبيعات</p><h3 className="text-2xl font-black text-slate-900">{totalSales} ج.م</h3></div>
               <div className="bg-green-100 p-3 rounded-full text-green-600"><Banknote className="w-6 h-6"/></div>
            </div>
-
            <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-400">عدد الطلبات</p>
-                <h3 className="text-2xl font-black text-slate-900">{orders.length} <span className="text-xs text-yellow-500">({pendingOrders} قيد الانتظار)</span></h3>
-              </div>
+              <div><p className="text-sm font-bold text-slate-400">عدد الطلبات</p><h3 className="text-2xl font-black text-slate-900">{orders.length} <span className="text-xs text-yellow-500">({pendingOrders} قيد الانتظار)</span></h3></div>
               <div className="bg-blue-100 p-3 rounded-full text-blue-600"><ShoppingBag className="w-6 h-6"/></div>
            </div>
-
            <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-slate-400">عدد المنتجات</p>
-                <h3 className="text-2xl font-black text-slate-900">{products.length}</h3>
-              </div>
+              <div><p className="text-sm font-bold text-slate-400">عدد المنتجات</p><h3 className="text-2xl font-black text-slate-900">{products.length}</h3></div>
               <div className="bg-purple-100 p-3 rounded-full text-purple-600"><Package className="w-6 h-6"/></div>
            </div>
         </div>
 
-        {/* المحتوى */}
+        {/* ✅✅ قسم الطلبات (مع زر الرفض الجديد) ✅✅ */}
         {activeTab === 'orders' && (
            <div className="grid gap-6">
              {loadingOrders ? <Loader2 className="animate-spin mx-auto"/> : orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-xl shadow-sm border p-4">
+                <div key={order.id} className={`bg-white rounded-xl shadow-sm border p-4 ${order.status === 'cancelled' ? 'opacity-50' : ''}`}>
                    <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
                       <div><span className="font-bold">#{order.id.slice(0,6)}</span> <span className="text-sm text-slate-400">{format(new Date(order.created_at), "dd MMM HH:mm", {locale: ar})}</span></div>
+                      
+                      {/* القائمة المنسدلة للحالات */}
                       <select value={order.status} onChange={(e) => handleUpdateStatus(order.id, e.target.value)} className={`text-xs font-bold p-2 rounded cursor-pointer outline-none border ${getStatusColor(order.status)}`}>
                         <option value="pending">⏳ مراجعة</option>
                         <option value="processing">⚙️ تنفيذ</option>
@@ -144,10 +147,36 @@ export default function AdminDashboard() {
                         <option value="cancelled">❌ ملغي</option>
                       </select>
                    </div>
-                   <div className="bg-slate-50 p-3 rounded text-sm mb-2">
-                      <p>💳 {order.payment_method}</p>
-                      {order.payment_receipt_url && <a href={order.payment_receipt_url} target="_blank" className="text-blue-600 font-bold underline text-xs">عرض صورة التحويل 🔗</a>}
+
+                   <div className="bg-slate-50 p-3 rounded text-sm mb-2 border border-slate-100">
+                      <div className="flex justify-between items-start">
+                        <div>
+                            <p className="mb-1">💳 <strong>الدفع:</strong> {order.payment_method === 'cod' ? 'عند الاستلام' : order.payment_method}</p>
+                            {order.payment_receipt_url && (
+                                <a href={order.payment_receipt_url} target="_blank" className="text-blue-600 font-bold underline text-xs block mt-1">
+                                    عرض صورة التحويل 🔗
+                                </a>
+                            )}
+                        </div>
+                        
+                        {/* ❌❌ زرار الرفض السريع (بيظهر بس لو الطلب مش ملغي لسه) ❌❌ */}
+                        {order.status !== 'cancelled' && (
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white border border-red-200 h-8"
+                                onClick={() => {
+                                    if(confirm("متأكد إنك عاوز ترفض الطلب ده وتلغيه؟")) {
+                                        handleUpdateStatus(order.id, 'cancelled');
+                                    }
+                                }}
+                            >
+                                <XCircle className="w-4 h-4 ml-1" /> رفض وإلغاء
+                            </Button>
+                        )}
+                      </div>
                    </div>
+
                    <div className="text-sm">
                       <p>👤 {order.shipping_address?.fullName} - {order.shipping_address?.phone}</p>
                       <p className="font-bold text-blue-600 mt-2 text-lg">{order.total_price} ج.م</p>
@@ -157,7 +186,7 @@ export default function AdminDashboard() {
            </div>
         )}
 
-        {/* ✅ تبويب المنتجات (فيه التعديل المطلوب) */}
+        {/* المنتجات (بالأقسام الجديدة) */}
         {activeTab === 'products' && (
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="bg-white p-6 rounded-xl border h-fit sticky top-4">
@@ -165,13 +194,7 @@ export default function AdminDashboard() {
                   <form onSubmit={handleAddProduct} className="space-y-3">
                     <Input placeholder="الاسم" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
                     <Input placeholder="السعر" type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} />
-                    
-                    {/* ✅✅✅ هنا القائمة الجديدة اللي أنت طلبتها ✅✅✅ */}
-                    <select 
-                      className="w-full border rounded p-2 bg-white outline-none focus:ring-2 focus:ring-slate-900" 
-                      value={newProduct.category} 
-                      onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                    >
+                    <select className="w-full border rounded p-2 bg-white outline-none" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}>
                       <option value="ahly">النادي الأهلي 🦅</option>
                       <option value="arab_clubs">أندية عربية 🇸🇦🇪🇬</option>
                       <option value="euro_clubs">أندية أوروبية 🇪🇺</option>
@@ -179,23 +202,16 @@ export default function AdminDashboard() {
                       <option value="euro_teams">منتخبات أوروبية 🏆</option>
                       <option value="others">أخرى</option>
                     </select>
-                    {/* ✅✅✅ نهاية التعديل ✅✅✅ */}
-
                     <Input placeholder="رابط الصورة" value={newProduct.image_url} onChange={e => setNewProduct({...newProduct, image_url: e.target.value})} />
                     <Textarea placeholder="وصف" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} />
                     <Button disabled={isAdding} className="w-full bg-slate-900 font-bold">{isAdding ? <Loader2 className="animate-spin"/> : "نشر المنتج"}</Button>
                   </form>
                 </div>
-                
                 <div className="lg:col-span-2 grid grid-cols-2 gap-4">
                   {products.map(p => (
                     <div key={p.id} className="bg-white p-3 rounded-xl border flex gap-3 relative group hover:shadow-md transition-all">
                       <img src={p.image_url} className="w-16 h-16 rounded object-cover bg-slate-100" />
-                      <div>
-                        <p className="font-bold line-clamp-1">{p.name}</p>
-                        <p className="text-blue-600 font-black">{p.price}ج</p>
-                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-500">{p.category}</span>
-                      </div>
+                      <div><p className="font-bold line-clamp-1">{p.name}</p><p className="text-blue-600 font-black">{p.price}ج</p><span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-500">{p.category}</span></div>
                       <button onClick={() => handleDeleteProduct(p.id)} className="absolute top-2 left-2 text-red-500 opacity-0 group-hover:opacity-100 transition-all bg-red-50 p-1 rounded-full"><Trash2 className="w-4 h-4"/></button>
                     </div>
                   ))}
