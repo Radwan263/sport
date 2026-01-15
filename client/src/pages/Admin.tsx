@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Ticket, CheckCircle, ShoppingBag, Banknote, Package } from "lucide-react";
+import { Loader2, Plus, Trash2, Ticket, CheckCircle, ShoppingBag, Banknote, Package, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
@@ -15,7 +15,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
   
-  const [newProduct, setNewProduct] = useState({ name: "", price: "", category: "men", image_url: "", description: "" });
+  // ✅ عدلنا القيمة الافتراضية هنا لتكون "ahly" بدلاً من "men"
+  const [newProduct, setNewProduct] = useState({ name: "", price: "", category: "ahly", image_url: "", description: "" });
   const [newCoupon, setNewCoupon] = useState({ code: "", discount_percent: "" });
   const [isAdding, setIsAdding] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -59,7 +60,19 @@ export default function AdminDashboard() {
   }
 
   // الدوال
-  const handleAddProduct = async (e: React.FormEvent) => { e.preventDefault(); setIsAdding(true); const { error } = await supabase.from('products').insert([newProduct]); if (!error) { toast.success("تم النشر"); setNewProduct({ name: "", price: "", category: "men", image_url: "", description: "" }); fetchProducts(); } setIsAdding(false); };
+  const handleAddProduct = async (e: React.FormEvent) => { 
+    e.preventDefault(); 
+    setIsAdding(true); 
+    const { error } = await supabase.from('products').insert([newProduct]); 
+    if (!error) { 
+      toast.success("تم النشر"); 
+      // إعادة تعيين الفورم
+      setNewProduct({ name: "", price: "", category: "ahly", image_url: "", description: "" }); 
+      fetchProducts(); 
+    } 
+    setIsAdding(false); 
+  };
+  
   const handleDeleteProduct = async (id: string) => { if(!confirm("حذف؟")) return; await supabase.from('products').delete().eq('id', id); fetchProducts(); };
   const handleUpdateStatus = async (orderId: string, newStatus: string) => { setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o)); await supabase.from('orders').update({ status: newStatus }).eq('id', orderId); toast.success("تم تحديث الحالة"); };
   const handleAddCoupon = async (e: React.FormEvent) => { e.preventDefault(); const { error } = await supabase.from('coupons').insert([{ code: newCoupon.code.toUpperCase(), discount_percent: Number(newCoupon.discount_percent) }]); if (!error) { toast.success("تم الكوبون"); setNewCoupon({ code: "", discount_percent: "" }); fetchCoupons(); } };
@@ -89,7 +102,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ✅ إحصائيات سريعة (Stats Cards) */}
+        {/* ✅ إحصائيات سريعة */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <div className="bg-white p-6 rounded-xl border shadow-sm flex items-center justify-between">
               <div>
@@ -144,10 +157,49 @@ export default function AdminDashboard() {
            </div>
         )}
 
+        {/* ✅ تبويب المنتجات (فيه التعديل المطلوب) */}
         {activeTab === 'products' && (
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="bg-white p-6 rounded-xl border h-fit"><h3 className="font-bold mb-4">إضافة منتج</h3><form onSubmit={handleAddProduct} className="space-y-3"><Input placeholder="الاسم" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} /><Input placeholder="السعر" type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} /><select className="w-full border rounded p-2" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}><option value="men">رجالي</option><option value="women">حريمي</option><option value="kids">أطفال</option></select><Input placeholder="رابط الصورة" value={newProduct.image_url} onChange={e => setNewProduct({...newProduct, image_url: e.target.value})} /><Textarea placeholder="وصف" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} /><Button disabled={isAdding} className="w-full bg-slate-900">{isAdding ? <Loader2 className="animate-spin"/> : "نشر"}</Button></form></div>
-                <div className="lg:col-span-2 grid grid-cols-2 gap-4">{products.map(p => (<div key={p.id} className="bg-white p-3 rounded border flex gap-3 relative group"><img src={p.image_url} className="w-16 h-16 rounded object-cover" /><div><p className="font-bold">{p.name}</p><p className="text-blue-600">{p.price}ج</p></div><button onClick={() => handleDeleteProduct(p.id)} className="absolute top-2 left-2 text-red-500 opacity-0 group-hover:opacity-100"><Trash2 className="w-4 h-4"/></button></div>))}</div>
+                <div className="bg-white p-6 rounded-xl border h-fit sticky top-4">
+                  <h3 className="font-bold mb-4 flex items-center gap-2"><Plus className="w-5 h-5"/> إضافة منتج</h3>
+                  <form onSubmit={handleAddProduct} className="space-y-3">
+                    <Input placeholder="الاسم" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
+                    <Input placeholder="السعر" type="number" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} />
+                    
+                    {/* ✅✅✅ هنا القائمة الجديدة اللي أنت طلبتها ✅✅✅ */}
+                    <select 
+                      className="w-full border rounded p-2 bg-white outline-none focus:ring-2 focus:ring-slate-900" 
+                      value={newProduct.category} 
+                      onChange={e => setNewProduct({...newProduct, category: e.target.value})}
+                    >
+                      <option value="ahly">النادي الأهلي 🦅</option>
+                      <option value="arab_clubs">أندية عربية 🇸🇦🇪🇬</option>
+                      <option value="euro_clubs">أندية أوروبية 🇪🇺</option>
+                      <option value="arab_teams">منتخبات عربية 🌍</option>
+                      <option value="euro_teams">منتخبات أوروبية 🏆</option>
+                      <option value="others">أخرى</option>
+                    </select>
+                    {/* ✅✅✅ نهاية التعديل ✅✅✅ */}
+
+                    <Input placeholder="رابط الصورة" value={newProduct.image_url} onChange={e => setNewProduct({...newProduct, image_url: e.target.value})} />
+                    <Textarea placeholder="وصف" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} />
+                    <Button disabled={isAdding} className="w-full bg-slate-900 font-bold">{isAdding ? <Loader2 className="animate-spin"/> : "نشر المنتج"}</Button>
+                  </form>
+                </div>
+                
+                <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                  {products.map(p => (
+                    <div key={p.id} className="bg-white p-3 rounded-xl border flex gap-3 relative group hover:shadow-md transition-all">
+                      <img src={p.image_url} className="w-16 h-16 rounded object-cover bg-slate-100" />
+                      <div>
+                        <p className="font-bold line-clamp-1">{p.name}</p>
+                        <p className="text-blue-600 font-black">{p.price}ج</p>
+                        <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-500">{p.category}</span>
+                      </div>
+                      <button onClick={() => handleDeleteProduct(p.id)} className="absolute top-2 left-2 text-red-500 opacity-0 group-hover:opacity-100 transition-all bg-red-50 p-1 rounded-full"><Trash2 className="w-4 h-4"/></button>
+                    </div>
+                  ))}
+                </div>
              </div>
         )}
         
