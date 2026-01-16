@@ -8,6 +8,10 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
+// ✅ بيانات البوت (عشان يبعتلك إشعار بالإلغاء)
+const TELEGRAM_BOT_TOKEN = "8505898687:AAHyu68rTcmpCjsm4DrBiN-2L7osaQLGd88";
+const TELEGRAM_CHAT_ID = "1414736450";
+
 export default function Profile() {
   const { user, signOut } = useAuth();
   const [, navigate] = useLocation();
@@ -33,10 +37,13 @@ export default function Profile() {
     fetchOrders();
   }, [user, navigate]);
 
-  // 🛑 دالة إلغاء الطلب
+  // 🛑 دالة إلغاء الطلب (تم التعديل لإرسال إشعار تليجرام)
   const handleCancelOrder = async (orderId: string) => {
     if (!confirm("هل أنت متأكد من إلغاء هذا الطلب؟ 😢")) return;
     
+    // 1. نجيب بيانات الطلب قبل الإلغاء عشان نبعتها ليك
+    const orderToCancel = orders.find(o => o.id === orderId);
+
     const { error } = await supabase
       .from('orders')
       .update({ status: 'cancelled' })
@@ -46,6 +53,31 @@ export default function Profile() {
       // تحديث الحالة فوراً قدام العميل
       setOrders(orders.map(o => o.id === orderId ? { ...o, status: 'cancelled' } : o));
       toast.success("تم إلغاء الطلب بنجاح");
+
+      // 2. إرسال إشعار لتليجرام 🚨
+      if (orderToCancel) {
+        const message = `
+🚨 *تنبيه: عميل لغى أوردر* 🚨
+---------------------------
+📦 *رقم الطلب:* #${orderToCancel.id.slice(0, 6)}
+👤 *العميل:* ${orderToCancel.shipping_address?.fullName}
+📞 *الهاتف:* ${orderToCancel.shipping_address?.phone}
+📍 *المحافظة:* ${orderToCancel.shipping_address?.governorate}
+💰 *قيمة الطلب:* ${orderToCancel.total_price} ج.م
+---------------------------
+⚠️ *الحالة:* قام العميل بإلغاء الطلب بنفسه من الموقع.
+`;
+        try {
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "Markdown" }),
+          });
+        } catch (err) {
+          console.error("فشل إرسال الإشعار", err);
+        }
+      }
+
     } else {
       toast.error("حدث خطأ، حاول مرة أخرى");
     }
@@ -77,7 +109,7 @@ export default function Profile() {
         <div className="bg-white p-6 rounded-2xl shadow-sm border flex flex-wrap justify-between items-center gap-4">
           <div>
             <h1 className="text-2xl font-black text-slate-900">أهلاً، {user?.email?.split('@')[0]} 👋</h1>
-            <p className="text-slate-500 text-sm">أهلاً بيك في بروفايلك الشخصي</p>
+            <p className="text-slate-500 text-sm">تابع حالة طلباتك من هنا</p>
           </div>
           <Button variant="destructive" onClick={handleLogout} className="font-bold">
             <LogOut className="w-4 h-4 ml-2" /> تسجيل خروج
@@ -127,10 +159,10 @@ export default function Profile() {
                     {/* المعلومات والملخص */}
                     <div className="space-y-4 border-r pr-0 md:pr-6 border-slate-100">
                       <div>
-                        <h3 className="font-bold text-sm text-slate-500 mb-1">عنوان التوصيل</h3>
-                        <p className="text-sm flex items-center gap-1"><MapPin className="w-3 h-3"/> {order.shipping_address?.governorate}</p>
-                        <p className="text-xs text-slate-400">{order.shipping_address?.street}</p>
-                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-1"><Phone className="w-3 h-3"/> {order.shipping_address?.phone}</p>
+                        <h3 className="font-bold text-sm text-slate-500 mb-1">بيانات الشحن</h3>
+                        <p className="text-sm flex items-center gap-1 font-bold">{order.shipping_address?.fullName}</p>
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><MapPin className="w-3 h-3"/> {order.shipping_address?.governorate} - {order.shipping_address?.street}</p>
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><Phone className="w-3 h-3"/> {order.shipping_address?.phone}</p>
                       </div>
                       
                       <div className="pt-4 border-t">
@@ -139,7 +171,7 @@ export default function Profile() {
                           <span className="font-black text-xl text-blue-600">{order.total_price} ج.م</span>
                         </div>
 
-                        {/* ✅✅ زر الإلغاء (يظهر فقط لو الطلب قيد المراجعة) ✅✅ */}
+                        {/* زر الإلغاء (يظهر فقط لو الطلب قيد المراجعة) */}
                         {order.status === 'pending' && (
                           <Button 
                             variant="outline" 
@@ -148,6 +180,9 @@ export default function Profile() {
                           >
                             <XCircle className="w-4 h-4 ml-2" /> إلغاء الطلب
                           </Button>
+                        )}
+                        {order.status === 'cancelled' && (
+                            <div className="text-center text-red-500 font-bold text-sm bg-red-50 p-2 rounded">تم إلغاء هذا الطلب</div>
                         )}
                       </div>
                     </div>
@@ -159,12 +194,11 @@ export default function Profile() {
         ) : (
           <div className="text-center py-20 bg-white rounded-xl border border-dashed">
             <Package className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-400">لا توجد طلبات سابقة</h3>
-            <Button variant="link" onClick={() => navigate("/shop")} className="text-blue-600 font-bold mt-2">ابدأ التسوق الآن</Button>
+            <h3 className="text-xl font-bold text-slate-400">لسه مفيش طلبات</h3>
+            <Button variant="link" onClick={() => navigate("/shop")} className="text-blue-600 font-bold mt-2">ابدأ التسوق</Button>
           </div>
         )}
       </div>
     </div>
   );
 }
-
