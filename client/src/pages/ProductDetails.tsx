@@ -9,6 +9,8 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { useLanguage } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { ReviewSection } from "@/components/ReviewSection";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProductDetails() {
   const [, params] = useRoute("/product/:id");
@@ -16,6 +18,7 @@ export default function ProductDetails() {
   const { addItem } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -213,6 +216,15 @@ export default function ProductDetails() {
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16 pt-8 border-t border-slate-200 dark:border-slate-700">
+          <ReviewSection 
+            productId={parseInt(params?.id || "0")} 
+            currentUserId={user?.id}
+            isAdmin={user?.role === "admin"}
+          />
         </div>
       </div>
     </div>

@@ -102,3 +102,33 @@ export const categories = mysqlTable("categories", {
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = typeof categories.$inferInsert;
+/**
+ * Reviews table for storing product reviews and ratings
+ */
+export const reviews = mysqlTable("reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  productId: int("product_id").notNull(),
+  userId: int("user_id").notNull(),
+  rating: int("rating").notNull(), // 1-5 stars
+  title: varchar("title", { length: 255 }),
+  comment: text("comment"),
+  likes: int("likes").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = typeof reviews.$inferInsert;
+
+/**
+ * Review likes table for tracking user likes on reviews
+ */
+export const reviewLikes = mysqlTable("review_likes", {
+  id: int("id").autoincrement().primaryKey(),
+  reviewId: int("review_id").notNull(),
+  userId: int("user_id").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ReviewLike = typeof reviewLikes.$inferSelect;
+export type InsertReviewLike = typeof reviewLikes.$inferInsert;

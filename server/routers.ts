@@ -46,6 +46,69 @@ export const appRouter = router({
         return profile;
       }),
   }),
+
+  reviews: router({
+    list: publicProcedure
+      .input(z.object({ productId: z.number() }))
+      .query(async ({ input }) => {
+        const { getReviewsByProductId, getAverageRating } = await import("./db");
+        const reviewsData = await getReviewsByProductId(input.productId);
+        const averageRating = await getAverageRating(input.productId);
+        
+        return {
+          reviews: reviewsData,
+          averageRating,
+        };
+      }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        productId: z.number(),
+        rating: z.number().min(1).max(5),
+        title: z.string().optional(),
+        comment: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { createReview } = await import("./db");
+        return await createReview({
+          productId: input.productId,
+          userId: ctx.user.id,
+          rating: input.rating,
+          title: input.title,
+          comment: input.comment,
+        });
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        rating: z.number().min(1).max(5).optional(),
+        title: z.string().optional(),
+        comment: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { updateReview } = await import("./db");
+        return await updateReview(input.id, {
+          rating: input.rating,
+          title: input.title,
+          comment: input.comment,
+        });
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { deleteReview } = await import("./db");
+        return await deleteReview(input.id);
+      }),
+    
+    like: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { addReviewLike } = await import("./db");
+        return await addReviewLike(input.id, ctx.user.id);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

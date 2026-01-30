@@ -1,6 +1,6 @@
 import { eq, like, and, SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, InsertProduct, Product, InsertOrder, Order, InsertUserProfile, UserProfile, InsertCategory, Category, categories, orders, products, userProfiles } from "../drizzle/schema";
+import { InsertUser, users, InsertProduct, Product, InsertOrder, Order, InsertUserProfile, UserProfile, InsertCategory, Category, categories, orders, products, userProfiles, reviews, reviewLikes, InsertReview } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -248,4 +248,114 @@ export async function createCategory(category: InsertCategory) {
   if (!db) return undefined;
 
   return db.insert(categories).values(category);
+}
+
+/**
+ * Get reviews for a product
+ */
+export async function getReviewsByProductId(productId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db.select().from(reviews).where(eq(reviews.productId, productId));
+}
+
+/**
+ * Create a new review
+ */
+export async function createReview(review: InsertReview) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  return db.insert(reviews).values(review);
+}
+
+/**
+ * Update a review
+ */
+export async function updateReview(id: number, updates: Partial<InsertReview>) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  return db.update(reviews).set(updates).where(eq(reviews.id, id));
+}
+
+/**
+ * Delete a review
+ */
+export async function deleteReview(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  return db.delete(reviews).where(eq(reviews.id, id));
+}
+
+/**
+ * Add a like to a review
+ */
+export async function addReviewLike(reviewId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // Check if already liked
+  const existing = await db
+    .select()
+    .from(reviewLikes)
+    .where(and(eq(reviewLikes.reviewId, reviewId), eq(reviewLikes.userId, userId)))
+    .limit(1);
+
+  if (existing.length > 0) {
+    // Already liked, remove the like
+    await db
+      .delete(reviewLikes)
+      .where(and(eq(reviewLikes.reviewId, reviewId), eq(reviewLikes.userId, userId)));
+    
+    // Decrease likes count
+    await db
+      .update(reviews)
+      .set({ likes: reviews.likes - 1 })
+      .where(eq(reviews.id, reviewId));
+  } else {
+    // Add new like
+    await db.insert(reviewLikes).values({ reviewId, userId });
+    
+    // Increase likes count
+    await db
+      .update(reviews)
+      .set({ likes: reviews.likes + 1 })
+      .where(eq(reviews.id, reviewId));
+  }
+}
+
+/**
+ * Get average rating for a product
+ */
+export async function getAverageRating(productId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const result = await db
+    .select()
+    .from(reviews)
+    .where(eq(reviews.productId, productId));
+
+  if (result.length === 0) return 0;
+  const sum = result.reduce((acc, r) => acc + r.rating, 0);
+  return sum / result.length;
+}
+
+/**
+ * Check if user liked a review
+ */
+export async function isReviewLikedByUser(reviewId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  const result = await db
+    .select()
+    .from(reviewLikes)
+    .where(and(eq(reviewLikes.reviewId, reviewId), eq(reviewLikes.userId, userId)))
+    .limit(1);
+
+  return result.length > 0;
 }
