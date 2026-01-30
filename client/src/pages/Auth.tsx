@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Mail, Lock, KeyRound, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, KeyRound, User, AlertCircle } from "lucide-react"; // ضفنا أيقونة User
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/i18n";
@@ -12,7 +12,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 export default function Auth() {
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth(); // شيلنا signUp من هنا عشان هنستخدمها مباشر
   const [, navigate] = useLocation();
   const { t, language } = useLanguage();
   
@@ -21,6 +21,7 @@ export default function Auth() {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState(""); // 👈 دي عشان الاسم
   const [otp, setOtp] = useState("");
 
   const handleGoogleLogin = async () => {
@@ -47,7 +48,18 @@ export default function Auth() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signUp(email, password);
+    
+    // ✅ هنا التعديل المهم: بنبعت الاسم مع التسجيل
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username: name, // 👈 ده اللي هيتسجل في جدول users
+        },
+      },
+    });
+
     setLoading(false);
     
     if (error) {
@@ -129,6 +141,22 @@ export default function Auth() {
 
           {mode !== 'verify' ? (
             <form onSubmit={mode === 'login' ? handleLogin : handleRegister} className="space-y-3">
+              
+              {/* 👇 خانة الاسم ظهرت هنا للمسجلين الجدد */}
+              {mode === 'register' && (
+                <div className="relative animate-in fade-in slide-in-from-top-2">
+                   <User className="absolute top-3.5 w-5 h-5 text-slate-400 dark:text-slate-500" style={{[language === "ar" ? "right" : "left"]: "12px"}} />
+                   <Input 
+                     required 
+                     type="text" 
+                     placeholder={t("fullName") || "الاسم بالكامل"} 
+                     className={`h-12 bg-slate-50 dark:bg-slate-700 dark:border-slate-600 dark:text-white ${language === "ar" ? "pr-10" : "pl-10"}`}
+                     value={name} 
+                     onChange={e => setName(e.target.value)} 
+                   />
+                </div>
+              )}
+
               <div className="relative">
                  <Mail className="absolute top-3.5 w-5 h-5 text-slate-400 dark:text-slate-500" style={{[language === "ar" ? "right" : "left"]: "12px"}} />
                  <Input 
@@ -169,6 +197,10 @@ export default function Auth() {
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {t("codeMessage") || "الكود وصل على:"} <span className="font-bold">{email}</span>
                 </p>
+                <div className="flex items-center justify-center gap-1 text-xs text-amber-600 bg-amber-50 p-1 rounded">
+                   <AlertCircle className="w-3 h-3"/>
+                   <span>لو موصلش، شوف الرسائل غير المرغوبة (Spam)</span>
+                </div>
               </div>
               
               <Input 
@@ -206,3 +238,4 @@ export default function Auth() {
     </div>
   );
 }
+
