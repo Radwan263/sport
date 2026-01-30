@@ -4,10 +4,13 @@ import { useCart } from "@/contexts/CartContext";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea"; // تأكد إنك ضفت مكون Textarea أو استخدم Input
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2, MapPin, Ticket, CreditCard, Banknote, Upload, Smartphone, AlertTriangle, Image as ImageIcon, User, Phone, Mail, Home, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { useLanguage } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 // ✅ بيانات البوت الجديدة
 const TELEGRAM_BOT_TOKEN = "8505898687:AAHyu68rTcmpCjsm4DrBiN-2L7osaQLGd88";
@@ -45,6 +48,7 @@ export default function Checkout() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { items, totalPrice: cartTotal, clearCart } = useCart();
   const [, navigate] = useLocation();
+  const { t, language } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // States للبيانات الجديدة
@@ -205,7 +209,22 @@ ${selectedGov.prepaidOnly ? "⚠️ شحن بريد (دفع مسبق)" : ""}
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4" dir="rtl">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-10 px-4 transition-colors" dir={language === "ar" ? "rtl" : "ltr"}>
+      {/* Header */}
+      <div className="bg-white dark:bg-slate-900 shadow-sm p-4 sticky top-0 z-50 mb-6 rounded-xl">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <h1 
+            className="text-2xl font-black text-slate-900 dark:text-white cursor-pointer hover:text-red-600 dark:hover:text-red-500 transition-colors" 
+            onClick={() => navigate("/")}
+          >
+            ERA<span className="text-red-600">SPORT</span>
+          </h1>
+          <div className="flex gap-2 items-center">
+            <LanguageSwitcher />
+            <ThemeSwitcher />
+          </div>
+        </div>
+      </div>
       <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* === فورم البيانات (يمين) === */}

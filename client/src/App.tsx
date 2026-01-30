@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartProvider } from "./contexts/CartContext"; 
 import { AuthProvider } from "./contexts/AuthContext"; 
 import { WishlistProvider } from "./contexts/WishlistContext";
+import { LanguageProvider } from "./lib/i18n";
 import { MessageCircle } from "lucide-react"; // أيقونة الواتس
 
 import Home from "./pages/Home";
@@ -40,10 +41,11 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <AuthProvider> 
-          <WishlistProvider> 
-            <CartProvider>
+      <ThemeProvider defaultTheme="light" switchable={true}>
+        <LanguageProvider>
+          <AuthProvider> 
+            <WishlistProvider> 
+              <CartProvider>
               <TooltipProvider>
                 <Toaster />
                 <Router />
@@ -63,6 +65,7 @@ function App() {
             </CartProvider>
           </WishlistProvider>
         </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
